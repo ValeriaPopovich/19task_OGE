@@ -253,30 +253,55 @@ for (let i = shuffled.length - 1; i > 0; i--) {
 
 const app = document.getElementById('app');
 
-function startScreen(){
+function startScreen() {
   app.innerHTML = `
     <div class="card" style="margin-top:8px">
       <h2>Тренажёр по геометрии<br>ОГЭ — Задание 19</h2>
-      <p style="color:var(--muted)">Введи своё имя и начни проверку знаний.</p>
+      <p style="color:var(--muted)">Введи своё имя и выбери, сколько утверждений хочешь пройти.</p>
+
       <input id="nameInput" placeholder="Твоё имя..." 
              style="padding:10px;border-radius:10px;border:2px solid #f9caca;width:80%;max-width:420px;font-size:1rem">
+      
       <br><br>
+      <label for="countInput" style="font-weight:700;color:#5a2b2b">Количество утверждений:</label><br>
+      <input id="countInput" type="number" min="1" max="${statements.length}" value="${statements.length}" 
+             style="margin-top:6px;padding:8px 10px;border-radius:10px;border:2px solid #f9caca;
+                    width:100px;text-align:center;font-size:1rem">
+      <p style="color:#8a5a63;font-size:0.9rem">Можно ввести от 1 до ${statements.length}</p>
+
+      <br>
       <button class="btn next-btn" style="min-width:240px" onclick="startGame()">Начать 🚀</button>
     </div>
   `;
 }
+
+
 startScreen();
 
-function startGame(){
+function startGame() {
   const input = document.getElementById('nameInput');
   const val = (input?.value || '').trim();
-  if(!val){ alert('Пожалуйста, введи имя!'); return; }
+  if (!val) { alert('Пожалуйста, введи имя!'); return; }
   studentName = val;
+
+  const countInput = document.getElementById('countInput');
+  let count = parseInt(countInput.value);
+  if (isNaN(count) || count < 1) count = 1;
+  if (count > statements.length) count = statements.length;
+
+  // перемешиваем и берём первые count утверждений
+  const shuffledAll = statements.slice().sort(() => Math.random() - 0.5);
+  shuffled.length = 0;
+  shuffled.push(...shuffledAll.slice(0, count));
+
   currentIndex = 0;
   correctCount = 0;
   answered = [];
+
   renderQuestion();
 }
+
+
 
 function counterHTML(){
   return `<div class="counter">Пройдено: ${currentIndex}/${shuffled.length} | Верных: ${correctCount}</div>`;
