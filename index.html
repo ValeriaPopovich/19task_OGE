@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -60,7 +53,7 @@
   }
 
   .feedback{
-    margin-top:16px;text-align:center;padding:12px;border-radius:14px;background:#fffafc;
+    margin-top:12px;text-align:center;padding:12px;border-radius:14px;background:#fffafc; padding:10px;
     border:2px solid rgba(0,0,0,.06)
   }
   .reaction{font-size:1.3rem;font-weight:800;margin-bottom:6px}
@@ -264,9 +257,11 @@ function startScreen() {
       
       <br><br>
       <label for="countInput" style="font-weight:700;color:#5a2b2b">Количество утверждений:</label><br>
-      <input id="countInput" type="number" min="1" max="${statements.length}" value="${statements.length}" 
-             style="margin-top:6px;padding:8px 10px;border-radius:10px;border:2px solid #f9caca;
-                    width:100px;text-align:center;font-size:1rem">
+      <input id="countInput" type="number" min="1" max="${statements.length}" value="${statements.length}"
+       oninput="validateCount(this.value)"
+       style="margin-top:6px;padding:8px 10px;border-radius:10px;border:2px solid #f9caca;
+              width:100px;text-align:center;font-size:1rem">
+      <p id="validationMsg" style="color:#b53e3e;font-size:0.9rem;font-weight:600;height:1em;margin-top:4px"></p>
       <p style="color:#8a5a63;font-size:0.9rem">Можно ввести от 1 до ${statements.length}</p>
 
       <br>
@@ -278,6 +273,21 @@ function startScreen() {
 
 startScreen();
 
+function validateCount(value) {
+  const msg = document.getElementById('validationMsg');
+  const max = statements.length;
+  let num = parseInt(value);
+
+  if (isNaN(num) || num < 1) {
+    msg.textContent = "❗ Минимум 1 утверждение";
+  } else if (num > max) {
+    msg.textContent = `❗ Максимум ${max} утверждений`;
+  } else {
+    msg.textContent = "";
+  }
+}
+
+
 function startGame() {
   const input = document.getElementById('nameInput');
   const val = (input?.value || '').trim();
@@ -285,11 +295,22 @@ function startGame() {
   studentName = val;
 
   const countInput = document.getElementById('countInput');
+  const msg = document.getElementById('validationMsg');
+  const max = statements.length;
   let count = parseInt(countInput.value);
-  if (isNaN(count) || count < 1) count = 1;
-  if (count > statements.length) count = statements.length;
 
-  // перемешиваем и берём первые count утверждений
+  // Проверяем: есть ли ошибка
+  if (isNaN(count) || count < 1) {
+    msg.textContent = "❗ Минимум 1 утверждение";
+    return; // не начинаем игру
+  } else if (count > max) {
+    msg.textContent = `❗ Максимум ${max} утверждений`;
+    return; // не начинаем игру
+  } else {
+    msg.textContent = "";
+  }
+
+  // Всё ок → запускаем
   const shuffledAll = statements.slice().sort(() => Math.random() - 0.5);
   shuffled.length = 0;
   shuffled.push(...shuffledAll.slice(0, count));
@@ -300,8 +321,6 @@ function startGame() {
 
   renderQuestion();
 }
-
-
 
 function counterHTML(){
   return `<div class="counter">Пройдено: ${currentIndex}/${shuffled.length} | Верных: ${correctCount}</div>`;
@@ -331,32 +350,34 @@ function checkAnswer(userAns){
   // записываем историю
   answered.push({ text: s.text, correct: s.correct, answer: userAns });
 
-  // визуальная реакция
-  if(isRight){ correctCount++; card.classList.add('correct'); }
-  else{ card.classList.add('wrong'); }
+  // визуальная реакция фона
+  if (isRight) { 
+    correctCount++; 
+    card.classList.add('correct'); 
+  } else { 
+    card.classList.add('wrong'); 
+  }
 
+  // лаконичная реакция (без повторов)
   const emoji = isRight ? '🌟' : '😅';
-  const reaction = isRight ? 'Молодец! Всё верно!' : 'Оу, ошибка!';
+  const reaction = isRight ? 'Молодец!' : 'Оу, ошибка!';
   const correctWord = s.correct ? 'Верно' : 'Неверно';
-  const verdictText = s.correct ? 'Утверждение верно.' : 'Утверждение неверно.';
 
   // убрать кнопки и показать разбор + «Далее»
   card.querySelector('.answers').remove();
   card.innerHTML += `
     <div class="feedback">
       <div class="reaction">${emoji} ${reaction}</div>
-      <div class="answer-title">Правильный ответ:</div>
-      <div class="answer-value">${correctWord}</div>
-      <p class="verdict">${verdictText}</p>
-      <p class="statement-repeat">«${s.text}»</p>
+      <p class="answer-title">Правильный ответ: <b class="answer-value">${correctWord}</b></p>
     </div>
     <button class="btn next-btn" onclick="nextQuestion()">Далее ➡️</button>
   `;
 
-  // обновить счётчик сверху (текущий считается уже отвечённым)
+  // обновить счётчик сверху (текущий уже отвечён)
   const cnt = document.querySelector('.counter');
-  if(cnt) cnt.textContent = `Пройдено: ${currentIndex + 1}/${shuffled.length} | Верных: ${correctCount}`;
+  if (cnt) cnt.textContent = `Пройдено: ${currentIndex + 1}/${shuffled.length} | Верных: ${correctCount}`;
 }
+
 
 function nextQuestion(){
   currentIndex++;
